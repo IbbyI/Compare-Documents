@@ -8,6 +8,7 @@ A Python script to compare two text or Word (`.txt` or `.docx`) documents for eq
 
 - Supports both `.txt` and `.docx` files.
 - Computes SHA-256 hash to quickly detect identical files.
+  - Hashes .txt files in 4KB chunks for memory efficiency.
 - Provides detailed manual comparison if files differ:
   - Line-level differences.
   - Word-level similarity percentage.
@@ -23,17 +24,26 @@ Ensure that you have the following dependencies installed:
 ```bash
 pip install -r requirements.txt
 ```
+
+---
+
+
 ## How to Use
 
 ```bash
-python compare.py --file1=<path_to_first_file> --file2=<path_to_second_file>
+python compare.py -f <path_to_first_file>, <path_to_second_file>
 ```
 
 ### Example
 
 ```bash
-python compare.py --file1=document1.docx --file2=document2.txt
+python compare.py -f document1.docx, document2.txt
 ```
+
+---
+
+## Output
+
 If files are identical, the output looks like:
 
 ```bash
@@ -57,6 +67,10 @@ Finished manual comparison!
 Line-level similarity: 85.71%
 Word-level similarity: 90.32%
 ```
+
+---
+
+
 ## Contributing
 Feel free to fork this project, submit issues, or contribute improvements via pull requests.
 
