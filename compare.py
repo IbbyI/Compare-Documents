@@ -200,13 +200,12 @@ def main(argv: list[str]) -> None:
             "-o",
             "--output",
             type=str,
-            nargs=1,
             help="<path_to_output_file>",
             default="output.txt",
         )
         args = parser.parse_args()
         DOC_1, DOC_2 = args.file[0], args.file[1]
-        OUTPUT_FILE = args.output[0]
+        OUTPUT_FILE = args.output
 
     except argparse.ArgumentError and TypeError:
         parser.print_help()
