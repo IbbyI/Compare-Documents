@@ -5,6 +5,7 @@ import re
 import argparse
 import os
 import logging
+import pymupdf
 from docx import Document
 
 FORMAT = "%(asctime)s %(message)s"
@@ -41,6 +42,10 @@ def read_text_from_file(path: str) -> str:
             print(f"✘ Error reading .txt file '{path}': {e}")
             logger.error(f"✘ Error reading .txt file '{path}': {e}")
             sys.exit(1)
+    elif path.lower().endswith(".pdf"):
+        with pymupdf.open(path) as f:
+            text = chr(12).join([page.get_text() for page in f])
+        return text
     else:
         sys.exit(f"✘ Unsupported file type: {path}")
 
@@ -62,7 +67,10 @@ def hash_docs(path: str) -> str:
             print(f"✘ Could not hash file {path}: {e}")
             logger.error(f"✘ Could not hash file {path}: {e}", exc_info=True)
             sys.exit(1)
-    elif path.lower().endswith(".txt"):
+    elif (
+        path.lower().endswith(".txt")
+        or path.lower().endswith(".pdf")
+    ):
         try:
             sha256_hash = hashlib.sha256()
             with open(path, "rb") as f:
@@ -166,7 +174,7 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
     print(f"Line-level similarity: {ratio_lines}%")
     print(f"Word-level similarity: {ratio_words}%\n")
     print(f"Output has been saved to: {output_file}")
-    
+
     logger.info(f"Line-level similarity for {file_1} & {file_2}: {ratio_lines}%")
     logger.info(f"Word-level similarity for {file_1} & {file_2}: {ratio_words}%")
 
@@ -194,7 +202,7 @@ def main(argv: list[str]) -> None:
             "--file",
             type=str,
             nargs=2,
-            help="<path_to_first_file>, <path_to_second_file>",
+            help="<path_to_first_file> <path_to_second_file>",
         )
         parser.add_argument(
             "-o",
@@ -214,6 +222,10 @@ def main(argv: list[str]) -> None:
     if not os.path.exists(DOC_1) or not os.path.exists(DOC_2):
         print("✘ One or both file paths do not exist.")
         logger.error("✘ One or both file paths do not exist.", exc_info=True)
+        sys.exit(2)
+
+    if not DOC_1 or not DOC_2:
+        print("✘ One or both file paths do not exist.")
         sys.exit(2)
 
     hashed_doc_1 = hash_docs(DOC_1)
