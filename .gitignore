@@ -2,3 +2,4 @@ env/
 .~lock*
 *.docx
 *.log
+output.txt
