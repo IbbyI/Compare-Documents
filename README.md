@@ -1,12 +1,12 @@
 # Document Comparison Tool
 
-A Python script to compare two text or Word (`.txt` or `.docx`) documents for equality, line-level differences, and word-level similarity.
+A Python script to compare two (`.txt`, `.docx`, or `.pdf`) documents for equality, line-level differences, and word-level similarity.
 
 ---
 
 ## Features
 
-- Supports both `.txt` and `.docx` files.
+- Supports both `.txt`, `.docx` and `.pdf` files.
 - Computes SHA-256 hash to quickly detect identical files.
   - Hashes .txt files in 4KB chunks for memory efficiency.
 - Provides detailed manual comparison if files differ:
