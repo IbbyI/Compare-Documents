@@ -31,7 +31,7 @@ def read_text_from_file(path: str) -> str:
             return "\n".join(text)
         except Exception as e:
             print(f"✘ Error reading .docx file '{path}': {e}")
-            logger.error(f"✘ Error reading .docx file '{path}': {e}")
+            logger.error(f"✘ Error reading .docx file '{path}': {e}", exc_info=True)
             sys.exit(1)
     elif path.lower().endswith(".txt"):
         try:
@@ -60,7 +60,7 @@ def hash_docs(path: str) -> str:
             return hashlib.sha256(text.encode("utf-8")).hexdigest()
         except Exception as e:
             print(f"✘ Could not hash file {path}: {e}")
-            logger.error(f"✘ Could not hash file {path}: {e}")
+            logger.error(f"✘ Could not hash file {path}: {e}", exc_info=True)
             sys.exit(1)
     elif path.lower().endswith(".txt"):
         try:
@@ -71,7 +71,7 @@ def hash_docs(path: str) -> str:
             return sha256_hash.hexdigest()
         except Exception as e:
             print(f"✘ Could not hash file {path}: {e}")
-            logger.error(f"✘ Could not hash file {path}: {e}")
+            logger.error(f"✘ Could not hash file {path}: {e}", exc_info=True)
             sys.exit(1)
 
 
@@ -95,7 +95,7 @@ def compare_hash(hash1: str, hash2: str, doc1: str, doc2: str) -> bool:
     return False
 
 
-def compare(file_1: str, file_2: str) -> None:
+def compare(file_1: str, file_2: str, output_file: str | None) -> None:
     """
     Perform Line and Word-Level Comparison for .txt or .docx.
     Args:
@@ -116,22 +116,57 @@ def compare(file_1: str, file_2: str) -> None:
     ratio_lines = round(
         difflib.SequenceMatcher(None, f1_lines, f2_lines).ratio() * 100, 2
     )
-
-    print("Differences: \n")
-    for line in diff:
-        sys.stdout.write(line + "\n")
-
-    print(f"\nFinished manual comparison!")
-    print(f"Line-level similarity: {ratio_lines}%")
-
     f1_words = re.findall(r"\w+", f1_text.lower())
     f2_words = re.findall(r"\w+", f2_text.lower())
     ratio_words = round(
         difflib.SequenceMatcher(None, f1_words, f2_words).ratio() * 100, 2
     )
 
-    print(f"Word-level similarity: {ratio_words}%\n")
+    print("Differences: \n")
+    if output_file:
+        try:
+            with open(output_file, "w") as f:
+                f.write(f"Differences between {file_1} and {file_2}: \n\n")
+                for line in diff:
+                    sys.stdout.write(line + "\n")
+                    f.write(line + "\n")
+                f.write("\nFinished manual comparison!")
+                f.write(
+                    f"\nLine-level similarity for {file_1} & {file_2}: {ratio_lines}%"
+                )
+                f.write(
+                    f"\nWord-level similarity for {file_1} & {file_2}: {ratio_words}%"
+                )
+            f.close()
+        except FileNotFoundError:
+            print(f"✘ Output filepath: {f} does not exist.")
+            logger.error(f"✘ Output filepath: {f} does not exist.", exc_info=True)
+        except TypeError:
+            print(f"✘ Data incompatible to write to file {f}")
+            logger.error(f"✘ Data incompatible to write to file {f}", exc_info=True)
+        except PermissionError:
+            print(f"✘ Permission denied: Can't write to file: {f}")
+            logger.error(
+                f"✘ Permission denied: Can't write to file: {f}", exc_info=True
+            )
+        except IsADirectoryError:
+            print(f"✘ Can't write to a directory! Given path: {f}")
+            logger.error(
+                f"✘ Can't write to a directory! Given path: {f}", exc_info=True
+            )
+        except OSError:
+            print(f"✘ Something went wrong. Can't write to: {f}")
+            logger.error(f"✘ System-level error. Can't write to: {f}", exc_info=True)
 
+    else:
+        for line in diff:
+            sys.stdout.write(line + "\n")
+
+    print("\nFinished manual comparison!")
+    print(f"Line-level similarity: {ratio_lines}%")
+    print(f"Word-level similarity: {ratio_words}%\n")
+    print(f"Output has been saved to: {output_file}")
+    
     logger.info(f"Line-level similarity for {file_1} & {file_2}: {ratio_lines}%")
     logger.info(f"Word-level similarity for {file_1} & {file_2}: {ratio_words}%")
 
@@ -144,6 +179,7 @@ def main(argv: list[str]) -> None:
     """
     DOC_1 = None
     DOC_2 = None
+    OUTPUT_FILE = None
 
     try:
         parser = argparse.ArgumentParser(
@@ -160,22 +196,32 @@ def main(argv: list[str]) -> None:
             nargs=2,
             help="<path_to_first_file>, <path_to_second_file>",
         )
+        parser.add_argument(
+            "-o",
+            "--output",
+            type=str,
+            nargs=1,
+            help="<path_to_output_file>",
+            default="output.txt",
+        )
         args = parser.parse_args()
         DOC_1, DOC_2 = args.file[0], args.file[1]
+        OUTPUT_FILE = args.output[0]
+
     except argparse.ArgumentError and TypeError:
         parser.print_help()
         sys.exit(2)
 
     if not os.path.exists(DOC_1) or not os.path.exists(DOC_2):
         print("✘ One or both file paths do not exist.")
-        logger.error("✘ One or both file paths do not exist.")
+        logger.error("✘ One or both file paths do not exist.", exc_info=True)
         sys.exit(2)
 
     hashed_doc_1 = hash_docs(DOC_1)
     hashed_doc_2 = hash_docs(DOC_2)
 
     if not compare_hash(hashed_doc_1, hashed_doc_2, DOC_1, DOC_2):
-        compare(DOC_1, DOC_2)
+        compare(DOC_1, DOC_2, OUTPUT_FILE)
 
 
 if __name__ == "__main__":
