@@ -2,4 +2,6 @@ env/
 .~lock*
 *.docx
 *.log
+*.pdf
+*.xlsx
 output.txt
