@@ -31,13 +31,13 @@ pip install -r requirements.txt
 ## How to Use
 
 ```bash
-python compare.py -f <path_to_first_file>, <path_to_second_file>
+python compare.py -f <path_to_first_file> <path_to_second_file> -o <path_to_output_file>
 ```
 
 ### Example
 
 ```bash
-python compare.py -f document1.docx, document2.txt
+python compare.py -f document1.docx document2.txt
 ```
 
 ---
@@ -67,6 +67,19 @@ Finished manual comparison!
 Line-level similarity: 85.71%
 Word-level similarity: 90.32%
 ```
+
+### Save Output to File
+
+You can use the -o/--output argument to save the comparison results to a file:
+
+```bash
+python compare.py -f document1.docx document2.txt -o results.txt
+```
+- If the files differ, the differences and similarity percentages will be written to results.txt.
+- If the files are identical, a simple message indicating equality is also saved.
+- By default, if -o is not specified, the output file is **output.txt**.
+
+### **If output.txt exists in working directory, it will overwrite it.**
 
 ---
 
