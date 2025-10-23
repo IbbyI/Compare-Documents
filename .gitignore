@@ -1,7 +1,10 @@
+.vscode/
 env/
+tests/
 .~lock*
 *.docx
 *.log
 *.pdf
 *.xlsx
+*.txt
 output.txt
