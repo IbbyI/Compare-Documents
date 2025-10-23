@@ -6,5 +6,4 @@ tests/
 *.log
 *.pdf
 *.xlsx
-*.txt
 output.txt
