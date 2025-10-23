@@ -6,6 +6,7 @@ import argparse
 import os
 import logging
 import pymupdf
+import pandas as pd
 from docx import Document
 
 FORMAT = "%(asctime)s %(message)s"
@@ -37,7 +38,9 @@ def read_text_from_file(path: str) -> str:
     elif path.lower().endswith(".txt"):
         try:
             with open(path, "r", encoding="utf-8") as f:
-                return f.read()
+                text_contents = f.read()
+            f.close()
+            return text_contents
         except OSError:
             print(f"✘ Error reading .txt file '{path}': {e}")
             logger.error(f"✘ Error reading .txt file '{path}': {e}")
@@ -46,6 +49,13 @@ def read_text_from_file(path: str) -> str:
         with pymupdf.open(path) as f:
             text = chr(12).join([page.get_text() for page in f])
         return text
+    elif path.lower().endswith(".xlsx"):
+        try:
+            df = pd.read_excel(path).fillna("")
+            return df.to_csv(index=False)
+        except Exception as e:
+            print(f"✘ Error reading .xlsx file '{path}': {e}")
+            logger.error(f"✘ Error reading .xlsx file '{path}': {e}", exc_info=True)
     else:
         sys.exit(f"✘ Unsupported file type: {path}")
 
@@ -70,12 +80,14 @@ def hash_docs(path: str) -> str:
     elif (
         path.lower().endswith(".txt")
         or path.lower().endswith(".pdf")
+        or path.lower().endswith(".xlsx")
     ):
         try:
             sha256_hash = hashlib.sha256()
             with open(path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(chunk)
+            f.close()
             return sha256_hash.hexdigest()
         except Exception as e:
             print(f"✘ Could not hash file {path}: {e}")
@@ -114,6 +126,43 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
     logger.warning(f"{file_1} and {file_2} are not identical.")
     logger.info("Performing manual comparison.")
 
+    if file_1.lower().endswith(".xlsx") and file_2.lower().endswith(".xlsx"):
+        try:
+            df1 = pd.read_excel(file_1).fillna("")
+            df2 = pd.read_excel(file_2).fillna("")
+
+            if df1.shape != df2.shape:
+                print(
+                    f"✘ {file_1} and {file_2} have different sizes.\nCalculating partial comparison..."
+                )
+                logger.warning(
+                    f"✘ {file_1} and {file_2} have different sizes. Calculating partial comparison..."
+                )
+
+            diff = df1.compare(df2, result_names=(f"{file_1}", f"{file_2}"))
+
+            total_cells = df1.size
+            matching_cells = (df1.values == df2.values).sum()
+            similarity = round((matching_cells / total_cells) * 100, 2)
+
+            print(f"Differences between {file_1} and {file_2}: \n")
+            print(diff)
+            print(f"\nCell-level similarity: {similarity}%")
+
+            if output_file:
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(f"Differences between {file_1} and {file_2}:\n")
+                    f.write(diff.to_string())
+                    f.write(f"\n\nCell-level similarity: {similarity}%\n")
+                print(f"Output saved to {output_file}")
+
+            logger.info(f"Excel comparison done. Cell-level similarity: {similarity}%")
+            return
+        except Exception as e:
+            print(f"✘ Error comparing Excel files: {e}")
+            logger.error(f"Error comparing Excel files: {e}", exc_info=True)
+            return
+
     f1_text = read_text_from_file(file_1)
     f2_text = read_text_from_file(file_2)
 
@@ -130,11 +179,11 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
         difflib.SequenceMatcher(None, f1_words, f2_words).ratio() * 100, 2
     )
 
-    print("Differences: \n")
+    print(f"Differences between {file_1} and {file_2}: \n")
     if output_file:
         try:
             with open(output_file, "w") as f:
-                f.write(f"Differences between {file_1} and {file_2}: \n\n")
+                f.write(f"Differences between {file_1} and {file_2}: \n")
                 for line in diff:
                     sys.stdout.write(line + "\n")
                     f.write(line + "\n")
@@ -165,7 +214,6 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
         except OSError:
             print(f"✘ Something went wrong. Can't write to: {f}")
             logger.error(f"✘ System-level error. Can't write to: {f}", exc_info=True)
-
     else:
         for line in diff:
             sys.stdout.write(line + "\n")
