@@ -39,7 +39,7 @@ def read_text_from_file(path: str) -> str:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 text_contents = f.read()
-            f.close()
+                f.close()
             return text_contents
         except OSError:
             print(f"✘ Error reading .txt file '{path}': {e}")
@@ -87,7 +87,7 @@ def hash_docs(path: str) -> str:
             with open(path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(chunk)
-            f.close()
+                f.close()
             return sha256_hash.hexdigest()
         except Exception as e:
             print(f"✘ Could not hash file {path}: {e}")
@@ -194,7 +194,7 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
                 f.write(
                     f"\nWord-level similarity for {file_1} & {file_2}: {ratio_words}%"
                 )
-            f.close()
+                f.close()
         except FileNotFoundError:
             print(f"✘ Output filepath: {f} does not exist.")
             logger.error(f"✘ Output filepath: {f} does not exist.", exc_info=True)
