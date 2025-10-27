@@ -1,9 +1,10 @@
 .vscode/
 env/
-tests/
+tests/__pycache__
 .~lock*
 *.docx
 *.log
 *.pdf
 *.xlsx
 output.txt
+utils/__pycache__
