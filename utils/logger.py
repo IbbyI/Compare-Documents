@@ -1,5 +1,11 @@
 import logging
 
+FORMAT = "%(asctime)s %(message)s"
+logging.basicConfig(
+    format=FORMAT, filename="compare.log", filemode="a", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 
 def log(level: str, message: str, exc_info: bool = False) -> None:
     """
@@ -9,12 +15,6 @@ def log(level: str, message: str, exc_info: bool = False) -> None:
         message (str): Log Message to Write to File.
         exc_info (bool): Exception Info to Write to File, False by Default.
     """
-    FORMAT = "%(asctime)s %(message)s"
-    logging.basicConfig(
-        format=FORMAT, filename="compare.log", filemode="w", level=logging.INFO
-    )
-    logger = logging.getLogger(__name__)
-
     log_levels = {
         "info": logger.info,
         "warning": logger.warning,
