@@ -5,7 +5,7 @@ import difflib
 import pandas as pd
 
 from utils.reader import read_text_from_file
-from .logger import log
+from utils.logger import log
 
 
 def hash_docs(path: str) -> str:
@@ -90,8 +90,9 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
                 print(
                     f"✘ {file_1} and {file_2} have different sizes.\nCalculating partial comparison..."
                 )
-                log.warning(
-                    f"✘ {file_1} and {file_2} have different sizes. Calculating partial comparison..."
+                log(
+                    level="warning",
+                    message=f"✘ {file_1} and {file_2} have different sizes. Calculating partial comparison...",
                 )
 
             diff = df1.compare(df2, result_names=(f"{file_1}", f"{file_2}"))
@@ -159,19 +160,39 @@ def compare(file_1: str, file_2: str, output_file: str | None) -> None:
                 f.close()
         except FileNotFoundError:
             print(f"✘ Output filepath: {f} does not exist.")
-            log.error(f"✘ Output filepath: {f} does not exist.", exc_info=True)
+            log(
+                level="error",
+                message=f"✘ Output filepath: {f} does not exist.",
+                exc_info=True,
+            )
         except TypeError:
             print(f"✘ Data incompatible to write to file {f}")
-            log.error(f"✘ Data incompatible to write to file {f}", exc_info=True)
+            log(
+                level="error",
+                message=f"✘ Data incompatible to write to file {f}",
+                exc_info=True,
+            )
         except PermissionError:
             print(f"✘ Permission denied: Can't write to file: {f}")
-            log.error(f"✘ Permission denied: Can't write to file: {f}", exc_info=True)
+            log(
+                level="error",
+                message=f"✘ Permission denied: Can't write to file: {f}",
+                exc_info=True,
+            )
         except IsADirectoryError:
             print(f"✘ Can't write to a directory! Given path: {f}")
-            log.error(f"✘ Can't write to a directory! Given path: {f}", exc_info=True)
+            log(
+                level="error",
+                message=f"✘ Can't write to a directory! Given path: {f}",
+                exc_info=True,
+            )
         except OSError:
             print(f"✘ Something went wrong. Can't write to: {f}")
-            log.error(f"✘ System-level error. Can't write to: {f}", exc_info=True)
+            log(
+                level="error",
+                message=f"✘ System-level error. Can't write to: {f}",
+                exc_info=True,
+            )
     else:
         for line in diff:
             sys.stdout.write(line + "\n")
