@@ -1,9 +1,11 @@
 import os
 import sys
+import time
 import argparse
 
-from utils.comparison import *
+from utils.hash import simple_hash, chunk_hash
 from utils.logger import log
+from utils.comparison import *
 
 
 def main(argv: list[str]) -> None:
@@ -47,25 +49,40 @@ def main(argv: list[str]) -> None:
         sys.exit(2)
 
     if not os.path.exists(DOC_1) or not os.path.exists(DOC_2):
-        print("✘ One or both file paths do not exist.")
+        print("✘ One or Both File Paths Do Not Exist.")
         log(
             level="error",
-            message="✘ One or both file paths do not exist.",
+            message="✘ One or Both File Paths Do Not Exist.",
             exc_info=True,
         )
         sys.exit(2)
 
     if not DOC_1 or not DOC_2:
-        print("✘ One or both file paths do not exist.")
+        print("✘ One or Both File Paths Do Not Exist.")
         sys.exit(2)
 
-    hashed_doc_1 = hash_docs(DOC_1)
-    hashed_doc_2 = hash_docs(DOC_2)
+    try:
+        hashed_doc_1, hashed_doc_2 = chunk_hash(DOC_1), chunk_hash(DOC_2)
+    except Exception as e:
+        log(
+            level="error",
+            message=f"✘ Could Not Chunk Hash {DOC_1}, {DOC_2}",
+            exc_info=True,
+        )
+        log(
+            level="info",
+            message=f"Attempting Simple Hash for {DOC_1}, {DOC_2}",
+        )
+        hashed_doc_1, hashed_doc_2 = simple_hash(DOC_1), simple_hash(DOC_2)
 
     if not compare_hash(hashed_doc_1, hashed_doc_2, DOC_1, DOC_2):
-        compare(DOC_1, DOC_2, OUTPUT_FILE)
+        compare_docs(DOC_1, DOC_2, OUTPUT_FILE)
+        time_taken = round(time.time() - start_time, 2)
+        print(f"Time Taken: {time_taken}s")
+        log(level="info", message=f"Time Taken: {time_taken}s")
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     log(level="info", message="Starting Program...")
     main(sys.argv[1:])
